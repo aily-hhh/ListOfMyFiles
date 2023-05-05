@@ -7,12 +7,50 @@
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/myFilesTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:text="@string/my_files"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/sortTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/sortTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        app:layout_constraintBottom_toTopOf="@+id/viewGradient"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginHorizontal="16dp"
+        android:text="@string/sorting"
+        android:textColor="@color/teal_700"
+        android:drawablePadding="4dp"
+        app:drawableStartCompat="@drawable/ic_sort" />
+
+    <View
+        android:id="@+id/viewGradient"
+        android:layout_width="wrap_content"
+        android:layout_height="5dp"
+        android:background="@drawable/limiter_gradient"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/listFilesRecyclerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/myFilesTextView" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/listFilesRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@+id/viewGradient" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

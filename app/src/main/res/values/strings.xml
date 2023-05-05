@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">List of my files</string>
+    <string name="my_files">Список файлов</string>
+    <string name="sorting">Сортировать</string>
 </resources>
