@@ -59,6 +59,8 @@
                 android:id="@+id/allFilesRadioButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:checked="true"
+                android:onClick="changeTypeListOfFiles"
                 android:text="@string/all_files" />
 
             <RadioButton
@@ -81,6 +83,7 @@
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/ic_arrow_up"
                 android:drawablePadding="4dp"
+                android:onClick="changeSort"
                 android:text="@string/size" />
 
             <RadioButton
@@ -89,6 +92,7 @@
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/ic_arrow_down"
                 android:drawablePadding="4dp"
+                android:onClick="changeSort"
                 android:text="@string/size" />
 
             <RadioButton
@@ -97,6 +101,7 @@
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/ic_arrow_up"
                 android:drawablePadding="4dp"
+                android:onClick="changeSort"
                 android:text="@string/date" />
 
             <RadioButton
@@ -105,6 +110,7 @@
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/ic_arrow_down"
                 android:drawablePadding="4dp"
+                android:onClick="changeSort"
                 android:text="@string/date" />
 
             <RadioButton
@@ -113,6 +119,7 @@
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/ic_arrow_up"
                 android:drawablePadding="4dp"
+                android:onClick="changeSort"
                 android:text="@string/expansion" />
 
             <RadioButton
@@ -121,6 +128,7 @@
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/ic_arrow_down"
                 android:drawablePadding="4dp"
+                android:onClick="changeSort"
                 android:text="@string/expansion" />
         </RadioGroup>
 
