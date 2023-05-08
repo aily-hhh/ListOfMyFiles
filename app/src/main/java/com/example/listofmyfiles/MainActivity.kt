@@ -1,5 +1,6 @@
 package com.example.listofmyfiles
 
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -8,16 +9,20 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.core.view.children
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class MainActivity : AppCompatActivity() {
 
-    var sortTextView: TextView? = null
+    private var sortTextView: TextView? = null
+    private val STORAGE_REQUEST_PERMISSION = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        requestPermission()
 
         sortTextView = findViewById(R.id.sortTextView)
         sortTextView?.setOnClickListener {
@@ -85,6 +90,20 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun haveStoragePermission() =
+        ActivityCompat.checkSelfPermission(this,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        )== PackageManager.PERMISSION_GRANTED
+
+    private fun requestPermission() {
+        if (!haveStoragePermission()) {
+            val permissions = arrayOf(
+                android.Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            ActivityCompat.requestPermissions(this, permissions, STORAGE_REQUEST_PERMISSION)
         }
     }
 }
