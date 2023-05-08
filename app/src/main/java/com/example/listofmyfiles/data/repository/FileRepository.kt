@@ -11,7 +11,7 @@ class FileRepository @Inject constructor(): FileDao {
 
     override suspend fun getFiles(result: (UiState<ArrayList<MyFile>>) -> Unit) {
         val directory: File = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).path
+            Environment.getExternalStorageDirectory().toString() + "/Download/VK"
         )
         val file = File(directory.toString())
         val listFiles = file.listFiles()
@@ -19,14 +19,16 @@ class FileRepository @Inject constructor(): FileDao {
         if (listFiles != null) {
             val res = arrayListOf<MyFile>()
             for (f in listFiles) {
-                val myFile = MyFile(
-                    f.nameWithoutExtension,
-                    f.totalSpace,
-                    f.lastModified(),
-                    f.extension,
-                    f.absolutePath
-                )
-                res.add(myFile)
+                if (f.isFile) {
+                    val myFile = MyFile(
+                        f.nameWithoutExtension,
+                        f.length(),
+                        f.lastModified(),
+                        f.extension,
+                        f.absolutePath
+                    )
+                    res.add(myFile)
+                }
             }
             result.invoke(UiState.Success(res))
         } else {
