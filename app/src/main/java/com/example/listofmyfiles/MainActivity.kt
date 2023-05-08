@@ -11,20 +11,25 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.view.children
+import com.example.listofmyfiles.databinding.ActivityMainBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class MainActivity : AppCompatActivity() {
+
+    private var _binding: ActivityMainBinding? = null
+    private val mBinding get() = _binding!!
 
     private var sortTextView: TextView? = null
     private val STORAGE_REQUEST_PERMISSION = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        _binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(mBinding.root)
 
         requestPermission()
 
-        sortTextView = findViewById(R.id.sortTextView)
+        sortTextView = mBinding.sortTextView
         sortTextView?.setOnClickListener {
             val bottomSheet = BottomSheetDialog(this)
             val view = layoutInflater.inflate(R.layout.bottom_sheet_dialog, null)
