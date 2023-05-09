@@ -1,19 +1,24 @@
 package com.example.listofmyfiles.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.os.Environment
+import android.provider.Settings
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.listofmyfiles.R
+import com.example.listofmyfiles.data.model.MyFile
 import com.example.listofmyfiles.data.viewModel.FilesViewModel
 import com.example.listofmyfiles.databinding.ActivityMainBinding
 import com.example.listofmyfiles.utils.UiState
@@ -31,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private var filesProgressBar: ProgressBar? = null
     private var listFilesRecyclerView: RecyclerView? = null
     private var adapterFiles: FilesAdapter? = null
-    private val STORAGE_REQUEST_PERMISSION = 1
+    private val listForSort: ArrayList<MyFile> = arrayListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,8 +44,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(mBinding.root)
 
         isStoragePermissionReadGranted()
-        isStoragePermissionWriteGranted()
-        requestPermission()
 
         filesProgressBar = mBinding.filesProgressBar
 
@@ -57,6 +60,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 is UiState.Success -> {
                     adapterFiles?.setDiffer(it.data)
+                    listForSort.clear()
+                    listForSort.addAll(it.data)
                     filesProgressBar?.visibility = View.GONE
                 }
                 else -> {
@@ -115,24 +120,37 @@ class MainActivity : AppCompatActivity() {
             if (view.isChecked) {
                 when (view.id) {
                     R.id.ascSizeRadioButton -> {
-                        Toast.makeText(this, "ascSizeRadioButton", Toast.LENGTH_SHORT).show()
+                        listForSort.sortBy {
+                            it.size
+                        }
                     }
                     R.id.descSizeRadioButton -> {
-                        Toast.makeText(this, "descSizeRadioButton", Toast.LENGTH_SHORT).show()
+                        listForSort.sortByDescending {
+                            it.size
+                        }
                     }
                     R.id.ascDateRadioButton -> {
-                        Toast.makeText(this, "ascDateRadioButton", Toast.LENGTH_SHORT).show()
+                        listForSort.sortBy {
+                            it.date
+                        }
                     }
                     R.id.descDateRadioButton -> {
-                        Toast.makeText(this, "descDateRadioButton", Toast.LENGTH_SHORT).show()
+                        listForSort.sortByDescending {
+                            it.date
+                        }
                     }
                     R.id.ascExpansionRadioButton -> {
-                        Toast.makeText(this, "ascExpansionRadioButton", Toast.LENGTH_SHORT).show()
+                        listForSort.sortBy {
+                            it.expansion
+                        }
                     }
                     R.id.descExpansionRadioButton -> {
-                        Toast.makeText(this, "descExpansionRadioButton", Toast.LENGTH_SHORT).show()
+                        listForSort.sortByDescending {
+                            it.expansion
+                        }
                     }
                 }
+                adapterFiles?.setDiffer(listForSort)
             }
         }
     }
@@ -142,65 +160,39 @@ class MainActivity : AppCompatActivity() {
             if (view.isChecked) {
                 when (view.id) {
                     R.id.allFilesRadioButton -> {
-                        // all files in list
+                        listForSort.filter {
+                            true
+                        }
                     }
                     R.id.editFilesRadioButton -> {
-                        // edited files in list
+                        listForSort.filter {
+                            it.isEdit
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun haveStoragePermission() =
-        ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED
-
-    private fun requestPermission() {
-        if (!haveStoragePermission()) {
-            val permissions = arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-            ActivityCompat.requestPermissions(this, permissions, STORAGE_REQUEST_PERMISSION)
+    fun isStoragePermissionReadGranted() {
+        if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE)
+        != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE), 100)
         }
-    }
 
-    fun isStoragePermissionReadGranted(): Boolean {
-        val TAG = "Storage Permission"
-        return if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                Log.v(TAG, "Permission is granted")
-                true
-            } else {
-                Log.v(TAG, "Permission is revoked")
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf<String>(Manifest.permission.READ_EXTERNAL_STORAGE),
-                    1
-                )
-                false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                    intent.addCategory("android.intent.category.DEFAULT")
+                    startActivityIfNeeded(intent, 101)
+                } catch (e: java.lang.Exception) {
+                    val intent = Intent()
+                    intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+                }
             }
-    }
-
-    fun isStoragePermissionWriteGranted(): Boolean {
-        val TAG = "Storage Permission"
-        return if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                Log.v(TAG, "Permission is granted")
-                true
-            } else {
-                Log.v(TAG, "Permission is revoked")
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    1
-                )
-                false
-            }
+        }
     }
 
     private fun initAdapter() {

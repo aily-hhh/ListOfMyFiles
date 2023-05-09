@@ -30,6 +30,7 @@ class FileRepository @Inject constructor(): FileDao {
                     res.add(myFile)
                 }
             }
+            res.sortBy { it.name }
             result.invoke(UiState.Success(res))
         } else {
             result.invoke(UiState.Failure("Файлы не найдены"))
