@@ -42,7 +42,7 @@ class FilesAdapter: RecyclerView.Adapter<FilesAdapter.FilesViewHolder>() {
     }
 
     private val differ = AsyncListDiffer(this, callback)
-    fun setDiffer(list: ArrayList<MyFile>) {
+    fun setDiffer(list: MutableList<MyFile>) {
         differ.submitList(list)
     }
 
@@ -89,6 +89,16 @@ class FilesAdapter: RecyclerView.Adapter<FilesAdapter.FilesViewHolder>() {
             }
             else -> {
                 holder.iconImageView.setImageResource(R.drawable.ic_another_file)
+            }
+        }
+
+        holder.itemView.apply {
+            setOnClickListener {
+                clickListener!!.onClickListener(currentFile.path)
+            }
+            setOnLongClickListener {
+                clickListener!!.onLongClickListener(currentFile.path, this)
+                false
             }
         }
     }
