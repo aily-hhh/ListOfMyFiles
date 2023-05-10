@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onLongClickListener(path: String, view: View) {
+                shareFile(path)
             }
         })
 
@@ -146,5 +147,20 @@ class MainActivity : AppCompatActivity() {
         openFileIntent.setDataAndTypeAndNormalize(contentUri, mime)
         openFileIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
         startActivity(openFileIntent)
+    }
+
+    private fun shareFile(path: String) {
+        val file: File = File(path)
+        val contentUri = FileProvider.getUriForFile(
+            this@MainActivity,
+            applicationContext.packageName + ".provider",
+            file
+        )
+        val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+        val shareFileIntent = Intent(Intent.ACTION_SEND)
+        shareFileIntent.type = mime
+        shareFileIntent.putExtra(Intent.EXTRA_STREAM, contentUri)
+        shareFileIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        startActivity(shareFileIntent)
     }
 }
