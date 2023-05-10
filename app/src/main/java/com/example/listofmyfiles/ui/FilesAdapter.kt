@@ -1,5 +1,6 @@
 package com.example.listofmyfiles.ui
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -56,11 +57,12 @@ class FilesAdapter: RecyclerView.Adapter<FilesAdapter.FilesViewHolder>() {
         return differ.currentList.size
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: FilesViewHolder, position: Int) {
         val currentFile = differ.currentList[position]
         holder.dateFileTextView.text = Date(currentFile.date).toString()
         holder.nameFileTextView.text = currentFile.name
-        holder.sizeFileTextView.text = currentFile.size.toString()
+        holder.sizeFileTextView.text = (currentFile.size / 100).toString() + " кБ,"
 
         when (currentFile.expansion) {
             "doc", "DOC" -> {
