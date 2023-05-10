@@ -1,17 +1,17 @@
 package com.example.listofmyfiles.ui
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.util.Log
 import android.view.View
-import android.widget.*
+import android.webkit.MimeTypeMap
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,7 +20,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.listofmyfiles.data.model.MyFile
 import com.example.listofmyfiles.data.viewModel.FilesViewModel
 import com.example.listofmyfiles.databinding.ActivityMainBinding
 import com.example.listofmyfiles.utils.UiState
@@ -40,7 +39,6 @@ class MainActivity : AppCompatActivity() {
     private var adapterFiles: FilesAdapter? = null
     private var filesViewModel: FilesViewModel? = null
     private var bottomSheet: BottomSheetSortFragment? = null
-    private val resultIntent = Intent("com.example.listofmyfiles.ACTION_RETURN_FILE")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,63 +51,16 @@ class MainActivity : AppCompatActivity() {
         bottomSheet = BottomSheetSortFragment()
 
         filesViewModel = ViewModelProvider(this)[FilesViewModel::class.java]
-        filesViewModel?.getAllFiles()
-        filesViewModel?.listFiles?.observe(this) {
-            when (it) {
-                is UiState.Loading -> {
-                    filesProgressBar?.visibility = View.VISIBLE
-                }
-                is UiState.Failure -> {
-                    Toast.makeText(this, it.error, Toast.LENGTH_SHORT).show()
-                    filesProgressBar?.visibility = View.GONE
-                }
-                is UiState.Success -> {
-                    adapterFiles?.setDiffer(it.data)
-                    filesProgressBar?.visibility = View.GONE
-                }
-                else -> {
-                    Toast.makeText(this, "Ошибка", Toast.LENGTH_SHORT).show()
-                    filesProgressBar?.visibility = View.GONE
-                }
-            }
-        }
+        initViewModel()
 
         listFilesRecyclerView = mBinding.listFilesRecyclerView
         initAdapter()
         adapterFiles?.setFileClickListener(object : FileClickListener {
             override fun onClickListener(path: String) {
-                Toast.makeText(this@MainActivity, "Click", Toast.LENGTH_SHORT).show()
-                val shareIntent = Intent().apply {
-                    this.action = Intent.ACTION_SEND
-                    this.putExtra(Intent.EXTRA_FROM_STORAGE, File(path))
-                    this.type = "file/*"
-                }
-                startActivity(shareIntent)
+                openFile(path)
             }
 
             override fun onLongClickListener(path: String, view: View) {
-                val requestFile = File(path)
-                val fileUri: Uri? = try {
-                    FileProvider.getUriForFile(
-                        this@MainActivity,
-                        "com.example.listofmyfiles.fileprovider",
-                        requestFile
-                    )
-                } catch (e: IllegalArgumentException) {
-                    Log.e(
-                        "File Selector",
-                        "The selected file can't be shared: $requestFile"
-                    )
-                    null
-                }
-
-                if (fileUri != null) {
-                    resultIntent.setDataAndType(fileUri, contentResolver.getType(fileUri))
-                    setResult(Activity.RESULT_OK, resultIntent)
-                } else {
-                    resultIntent.setDataAndType(null, "")
-                    setResult(RESULT_CANCELED, resultIntent)
-                }
             }
         })
 
@@ -158,5 +109,42 @@ class MainActivity : AppCompatActivity() {
             adapter = adapterFiles
             layoutManager = StaggeredGridLayoutManager(1, LinearLayoutManager.VERTICAL)
         }
+    }
+
+    private fun initViewModel() {
+        filesViewModel?.getAllFiles()
+        filesViewModel?.listFiles?.observe(this) {
+            when (it) {
+                is UiState.Loading -> {
+                    filesProgressBar?.visibility = View.VISIBLE
+                }
+                is UiState.Failure -> {
+                    Toast.makeText(this, it.error, Toast.LENGTH_SHORT).show()
+                    filesProgressBar?.visibility = View.GONE
+                }
+                is UiState.Success -> {
+                    adapterFiles?.setDiffer(it.data)
+                    filesProgressBar?.visibility = View.GONE
+                }
+                else -> {
+                    Toast.makeText(this, "Ошибка", Toast.LENGTH_SHORT).show()
+                    filesProgressBar?.visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    private fun openFile(path: String) {
+        val file: File = File(path)
+        val contentUri = FileProvider.getUriForFile(
+            this@MainActivity,
+            applicationContext.packageName + ".provider",
+            file
+        )
+        val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+        val openFileIntent = Intent(Intent.ACTION_VIEW)
+        openFileIntent.setDataAndTypeAndNormalize(contentUri, mime)
+        openFileIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        startActivity(openFileIntent)
     }
 }
