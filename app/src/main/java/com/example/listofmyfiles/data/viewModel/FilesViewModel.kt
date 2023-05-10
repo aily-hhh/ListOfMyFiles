@@ -83,17 +83,8 @@ class FilesViewModel @Inject constructor(private val repository: FileRepository)
 
     fun sortAllFiles() {
         viewModelScope.launch(Dispatchers.IO) {
-            (_listFiles.value as UiState.Success<ArrayList<MyFile>>).data.filter {
-                true
-            }
-            Log.d("SORT", listFiles.value.toString())
-        }
-    }
-
-    fun sortEditFiles() {
-        viewModelScope.launch(Dispatchers.IO) {
-            (_listFiles.value as UiState.Success<ArrayList<MyFile>>).data.filter {
-                it.name.length < 10
+            (_listFiles.value as UiState.Success<ArrayList<MyFile>>).data.sortBy {
+                it.name
             }
             Log.d("SORT", listFiles.value.toString())
         }

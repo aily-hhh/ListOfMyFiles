@@ -11,7 +11,7 @@ class FileRepository @Inject constructor(): FileDao {
 
     override suspend fun getFiles(result: (UiState<ArrayList<MyFile>>) -> Unit) {
         val directory: File = File(
-            Environment.getExternalStorageDirectory().toString() + "/Download/VK"
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
         )
         val file = File(directory.toString())
         val listFiles = file.listFiles()

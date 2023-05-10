@@ -1,19 +1,15 @@
 package com.example.listofmyfiles.ui
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.RadioButton
 import android.widget.RadioGroup
-import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import com.example.listofmyfiles.R
 import com.example.listofmyfiles.data.viewModel.FilesViewModel
 import com.example.listofmyfiles.databinding.BottomSheetDialogBinding
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -25,9 +21,7 @@ class BottomSheetSortFragment : BottomSheetDialogFragment() {
     private var filesViewModel: FilesViewModel? = null
     private var cancelButton: Button? = null
     private var saveButton: Button? = null
-
     private var sortRadioGroup: RadioGroup? = null
-    private var typeOfFilesRadioGroup: RadioGroup? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,10 +38,11 @@ class BottomSheetSortFragment : BottomSheetDialogFragment() {
         saveButton = mBinding.saveButton
 
         cancelButton?.setOnClickListener {
-            Toast.makeText(context, "Cancel", Toast.LENGTH_SHORT).show()
+            sortRadioGroup?.clearCheck()
+            filesViewModel?.sortAllFiles()
         }
         saveButton?.setOnClickListener {
-            Toast.makeText(context, "Save", Toast.LENGTH_SHORT).show()
+            dismiss()
         }
 
         sortRadioGroup = mBinding.sortRadioGroup
@@ -70,18 +65,6 @@ class BottomSheetSortFragment : BottomSheetDialogFragment() {
                 }
                 R.id.descExpansionRadioButton -> {
                     filesViewModel?.sortDescExpansion()
-                }
-            }
-        }
-
-        typeOfFilesRadioGroup = mBinding.typeOfFilesRadioGroup
-        typeOfFilesRadioGroup?.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.allFilesRadioButton -> {
-                    filesViewModel?.sortAllFiles()
-                }
-                R.id.editFilesRadioButton -> {
-                    filesViewModel?.sortEditFiles()
                 }
             }
         }
