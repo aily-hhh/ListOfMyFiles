@@ -1,29 +1,31 @@
 package com.example.listofmyfiles.ui
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.children
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.listofmyfiles.R
 import com.example.listofmyfiles.data.model.MyFile
 import com.example.listofmyfiles.data.viewModel.FilesViewModel
 import com.example.listofmyfiles.databinding.ActivityMainBinding
 import com.example.listofmyfiles.utils.UiState
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
 
 
 @AndroidEntryPoint
@@ -36,7 +38,9 @@ class MainActivity : AppCompatActivity() {
     private var filesProgressBar: ProgressBar? = null
     private var listFilesRecyclerView: RecyclerView? = null
     private var adapterFiles: FilesAdapter? = null
-    private val listForSort: ArrayList<MyFile> = arrayListOf()
+    private var filesViewModel: FilesViewModel? = null
+    private var bottomSheet: BottomSheetSortFragment? = null
+    private val resultIntent = Intent("com.example.listofmyfiles.ACTION_RETURN_FILE")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,10 +50,11 @@ class MainActivity : AppCompatActivity() {
         isStoragePermissionReadGranted()
 
         filesProgressBar = mBinding.filesProgressBar
+        bottomSheet = BottomSheetSortFragment()
 
-        val filesViewModel = ViewModelProvider(this)[FilesViewModel::class.java]
-        filesViewModel.getAllFiles()
-        filesViewModel.listFiles.observe(this) {
+        filesViewModel = ViewModelProvider(this)[FilesViewModel::class.java]
+        filesViewModel?.getAllFiles()
+        filesViewModel?.listFiles?.observe(this) {
             when (it) {
                 is UiState.Loading -> {
                     filesProgressBar?.visibility = View.VISIBLE
@@ -60,8 +65,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 is UiState.Success -> {
                     adapterFiles?.setDiffer(it.data)
-                    listForSort.clear()
-                    listForSort.addAll(it.data)
                     filesProgressBar?.visibility = View.GONE
                 }
                 else -> {
@@ -73,40 +76,46 @@ class MainActivity : AppCompatActivity() {
 
         listFilesRecyclerView = mBinding.listFilesRecyclerView
         initAdapter()
-        adapterFiles?.setFileClickListener(object: FileClickListener {
+        adapterFiles?.setFileClickListener(object : FileClickListener {
             override fun onClickListener(path: String) {
-                TODO("Not yet implemented")
+                Toast.makeText(this@MainActivity, "Click", Toast.LENGTH_SHORT).show()
+                val shareIntent = Intent().apply {
+                    this.action = Intent.ACTION_SEND
+                    this.putExtra(Intent.EXTRA_FROM_STORAGE, File(path))
+                    this.type = "file/*"
+                }
+                startActivity(shareIntent)
             }
 
-            override fun onLongClickListener(path: String) {
-                TODO("Not yet implemented")
+            override fun onLongClickListener(path: String, view: View) {
+                val requestFile = File(path)
+                val fileUri: Uri? = try {
+                    FileProvider.getUriForFile(
+                        this@MainActivity,
+                        "com.example.listofmyfiles.fileprovider",
+                        requestFile
+                    )
+                } catch (e: IllegalArgumentException) {
+                    Log.e(
+                        "File Selector",
+                        "The selected file can't be shared: $requestFile"
+                    )
+                    null
+                }
+
+                if (fileUri != null) {
+                    resultIntent.setDataAndType(fileUri, contentResolver.getType(fileUri))
+                    setResult(Activity.RESULT_OK, resultIntent)
+                } else {
+                    resultIntent.setDataAndType(null, "")
+                    setResult(RESULT_CANCELED, resultIntent)
+                }
             }
         })
 
         sortTextView = mBinding.sortTextView
         sortTextView?.setOnClickListener {
-            val bottomSheet = BottomSheetDialog(this)
-            val view = layoutInflater.inflate(R.layout.bottom_sheet_dialog, null)
-
-            val allFilesRB = findViewById<RadioButton>(R.id.allFilesRadioButton)
-            val sortRadioGroup = findViewById<RadioGroup>(R.id.sortRadioGroup)
-
-            val saveButton = findViewById<Button>(R.id.saveButton)
-            saveButton?.setOnClickListener {
-                bottomSheet.dismiss()
-            }
-            val cancelButton = findViewById<Button>(R.id.cancelButton)
-            cancelButton?.setOnClickListener {
-                allFilesRB.isChecked = true
-                for (i in sortRadioGroup.children) {
-                    (i as RadioButton).isChecked = false
-                }
-                bottomSheet.dismiss()
-            }
-
-            bottomSheet.setCancelable(true)
-            bottomSheet.setContentView(view)
-            bottomSheet.show()
+            bottomSheet?.show(supportFragmentManager, "BottomSheetSort")
         }
     }
 
@@ -115,70 +124,18 @@ class MainActivity : AppCompatActivity() {
         _binding = null
     }
 
-    fun changeSort(view: View) {
-        if (view is RadioButton) {
-            if (view.isChecked) {
-                when (view.id) {
-                    R.id.ascSizeRadioButton -> {
-                        listForSort.sortBy {
-                            it.size
-                        }
-                    }
-                    R.id.descSizeRadioButton -> {
-                        listForSort.sortByDescending {
-                            it.size
-                        }
-                    }
-                    R.id.ascDateRadioButton -> {
-                        listForSort.sortBy {
-                            it.date
-                        }
-                    }
-                    R.id.descDateRadioButton -> {
-                        listForSort.sortByDescending {
-                            it.date
-                        }
-                    }
-                    R.id.ascExpansionRadioButton -> {
-                        listForSort.sortBy {
-                            it.expansion
-                        }
-                    }
-                    R.id.descExpansionRadioButton -> {
-                        listForSort.sortByDescending {
-                            it.expansion
-                        }
-                    }
-                }
-                adapterFiles?.setDiffer(listForSort)
-            }
-        }
-    }
-
-    fun changeTypeListOfFiles(view: View) {
-        if (view is RadioButton) {
-            if (view.isChecked) {
-                when (view.id) {
-                    R.id.allFilesRadioButton -> {
-                        listForSort.filter {
-                            true
-                        }
-                    }
-                    R.id.editFilesRadioButton -> {
-                        listForSort.filter {
-                            it.isEdit
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fun isStoragePermissionReadGranted() {
-        if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE)
-        != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE), 100)
+    private fun isStoragePermissionReadGranted() {
+        if (ContextCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ), 100
+            )
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
